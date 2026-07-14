@@ -1,6 +1,12 @@
 import PyPDF2
 import sqlite3
 import json
+from sentence_transformers import SentenceTransformer
+
+# Model ilk çalışmada indirilir, sonrasında tamamen çevrimdışı ve yerel çalışır
+print("Embedding modeli yükleniyor...")
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+print("Model başarıyla yüklendi!\n")
 
 def pdf_metnini_cikar(pdf_yolu):
     print(f"[{pdf_yolu}] dosyası okunuyor...")
@@ -17,24 +23,18 @@ def pdf_metnini_cikar(pdf_yolu):
         return None
 
 def metni_parcalara_bol(metin):
-    """Metni paragraflara böler ve çok kısa anlamsız parçaları temizler."""
     ham_parcalar = metin.split('\n\n')
     temiz_parcalar = []
-    
     for parca in ham_parcalar:
         parca = parca.strip()
-        # Sadece 20 karakterden uzun olan (sayfa numarası vb. olmayan) parçaları al
         if len(parca) > 20:
             temiz_parcalar.append(parca)
-            
     return temiz_parcalar
 
 def veritabanina_kaydet(parcalar):
-    """Parçaları SQLite veritabanına kaydeder."""
     conn = sqlite3.connect('rag_hafiza.db')
     cursor = conn.cursor()
 
-    # Tablo yoksa oluşturuyoruz
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,17 +42,22 @@ def veritabanina_kaydet(parcalar):
             embedding TEXT NOT NULL
         )
     ''')
+    
+    # Eski sahte verileri temizleyelim ki veritabanımız pırıl pırıl olsun
+    cursor.execute('DELETE FROM documents')
 
     eklenen_sayi = 0
     for parca in parcalar:
-        # DİKKAT: Şimdilik Foundry Local embedding modelini bağlamadık.
-        # Test amaçlı sahte bir vektör ekliyoruz. Sonraki adımda burası gerçek yapay zeka olacak!
-        sahte_vektor = json.dumps([0.0, 0.0, 0.0])
+        # magic part: metni al, modele ver, 384 boyutlu vektöre çevir!
+        vektor = embedding_model.encode(parca).tolist()
+        
+        # Bu sayı dizisini SQLite'a yazabilmek için JSON formatına (metne) çeviriyoruz
+        vektor_json = json.dumps(vektor)
 
         cursor.execute('''
             INSERT INTO documents (content, embedding)
             VALUES (?, ?)
-        ''', (parca, sahte_vektor))
+        ''', (parca, vektor_json))
         eklenen_sayi += 1
 
     conn.commit()
@@ -64,10 +69,8 @@ if __name__ == "__main__":
     metin = pdf_metnini_cikar(dosya_adi)
     
     if metin:
-        # 1. Adım: Metni parçalara böl
         parcalar = metni_parcalara_bol(metin)
-        print(f"\nSistem: Metin {len(parcalar)} adet anlamlı parçaya (chunk) bölündü.")
+        print(f"Sistem: Metin {len(parcalar)} adet anlamlı parçaya (chunk) bölündü. Vektörlere dönüştürülüyor...")
         
-        # 2. Adım: Veritabanına kaydet
         kayit_sayisi = veritabanina_kaydet(parcalar)
-        print(f"Sistem: {kayit_sayisi} adet parça SQLite veritabanına başarıyla kaydedildi!")
+        print(f"\nSistem: {kayit_sayisi} adet parça GERÇEK vektörlerle SQLite'a kaydedildi! İşlem Tamam!")
