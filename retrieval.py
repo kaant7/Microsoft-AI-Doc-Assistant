@@ -6,57 +6,57 @@ from sentence_transformers import SentenceTransformer
 print("Embedding modeli yükleniyor...")
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-def kosinus_benzerligi(vektor1, vektor2):
+def calculate_cosine_similarity(vector1, vector2):
     """İki vektör arasındaki matematiksel benzerliği (Cosine Similarity) hesaplar."""
-    v1 = np.array(vektor1)
-    v2 = np.array(vektor2)
+    v1 = np.array(vector1)
+    v2 = np.array(vector2)
     # Formül: v1 • v2 / (|v1| * |v2|)
     return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
 
-def veritabaninda_ara(kullanici_sorusu, getirecek_parca_sayisi=1):
+def vector_search(user_query, top_k=1):
     """Soruyu vektöre çevirir ve veritabanındaki en alakalı metinleri bulur."""
     
     # 1. Kullanıcının sorusunu aynı modelle vektöre dönüştür
-    soru_vektoru = embedding_model.encode(kullanici_sorusu).tolist()
+    query_embedding = embedding_model.encode(user_query).tolist()
     
     # 2. Veritabanına bağlan ve tüm kayıtları çek
-    conn = sqlite3.connect('rag_hafiza.db')
+    conn = sqlite3.connect('rag_memory.db')
     cursor = conn.cursor()
     cursor.execute('SELECT id, content, embedding FROM documents')
-    kayitlar = cursor.fetchall()
+    records = cursor.fetchall()
     conn.close()
     
-    sonuclar = []
+    results = []
     
     # 3. Her bir staj kılavuzu parçası ile sorunun benzerliğini ölç
-    for kayit in kayitlar:
-        kayit_id = kayit[0]
-        metin = kayit[1]
+    for record in records:
+        record_id = record[0]
+        content = record[1]
         
         # Veritabanındaki metin (JSON) formatındaki vektörü tekrar diziye çevir
-        kayit_vektoru = json.loads(kayit[2]) 
+        record_embedding = json.loads(record[2]) 
         
         # Benzerlik skorunu hesapla (1.0'a ne kadar yakınsa o kadar benzer)
-        skor = kosinus_benzerligi(soru_vektoru, kayit_vektoru)
-        sonuclar.append({"id": kayit_id, "metin": metin, "skor": skor})
+        score = calculate_cosine_similarity(query_embedding, record_embedding)
+        results.append({"id": record_id, "content": content, "score": score})
         
     # 4. Skorlara göre büyükten küçüğe sırala
-    sonuclar = sorted(sonuclar, key=lambda x: x["skor"], reverse=True)
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
     
     # En iyi sonucu döndür
-    return sonuclar[:getirecek_parca_sayisi]
+    return results[:top_k]
 
 # Sistemi Test Etme Alanı
 if __name__ == "__main__":
     # Sisteme staj kuralları ile ilgili spesifik bir soru soruyoruz
-    test_sorusu = "Staj defteri ve raporları en son hangi aya kadar teslim edilmelidir?"
-    print(f"\nSoru: '{test_sorusu}'\n")
+    test_query = "Staj defteri ve raporları en son hangi aya kadar teslim edilmelidir?"
+    print(f"\nSoru: '{test_query}'\n")
     
     # Fonksiyonu çalıştır ve en iyi 1 metni getir
-    bulunan_parcalar = veritabaninda_ara(test_sorusu, getirecek_parca_sayisi=1)
+    retrieved_chunks = vector_search(test_query, top_k=1)
     
     print("--- YAPAY ZEKA TARAFINDAN BULUNAN EN ALAKALI KILAVUZ METNİ ---")
-    for i, sonuc in enumerate(bulunan_parcalar):
-        print(f"\nBenzerlik Skoru: {sonuc['skor']:.4f}")
+    for i, result in enumerate(retrieved_chunks):
+        print(f"\nBenzerlik Skoru: {result['score']:.4f}")
         print("Metin İçeriği:")
-        print(sonuc["metin"])
+        print(result["content"])
