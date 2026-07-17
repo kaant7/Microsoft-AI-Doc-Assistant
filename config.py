@@ -3,7 +3,6 @@ class Config:
     DOCS_DIR = "docs"
     DB_PATH = "rag.db"
     
-    # leestott projesinin standart değerleri
-    CHUNK_SIZE = 100     # Her parçadaki kelime sayısı
-    CHUNK_OVERLAP = 25   # Parçalar arası bağlam kopmasın diye ortak kelime sayısı
-    TOP_K = 3            # Soruya en çok benzeyen kaç parçanın LLM'e gideceği
+    CHUNK_SIZE = 200     # Her parçadaki kelime sayısı #200
+    CHUNK_OVERLAP = 25   # Parçalar arası bağlam kopmasın diye ortak kelime sayısı #25
+    TOP_K = 1            # Soruya en çok benzeyen kaç parçanın LLM'e gideceği #3

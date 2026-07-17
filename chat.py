@@ -4,6 +4,7 @@ import numpy as np
 from config import Config
 from sentence_transformers import SentenceTransformer
 from foundry_local_sdk import Configuration, FoundryLocalManager
+from prompts import SYSTEM_PROMPT
 
 print("Sistem: Arama motoru ayağa kaldırılıyor...")
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -45,12 +46,19 @@ def start_chat():
     client = model.get_chat_client()
     
     # Github projesiyle uyumlu sistem komutu
-    system_prompt = (
-        "You are an offline support agent. Rules:\n"
-        "- Only answer using the retrieved context.\n"
-        "- If the answer isn't in the context, say so.\n"
-        "- Respond in the language of the user's prompt."
-    )
+    # system_prompt = (
+    #     "You are an offline support agent. Rules:\n"
+    #     "- Only answer using the retrieved context.\n"
+    #     "- If the answer isn't in the context, say so.\n"
+    #     "- Respond in the language of the user's prompt."
+    # )
+    # system_prompt = (
+    #     "Sen profesyonel bir staj asistanısın. Kurallara KESİNLİKLE uy: "
+    #     "1. SADECE 'Context' içinde verilen bilgileri kullanarak, sorulan soruya doğrudan ve kısa cevap ver. "
+    #     "2. Cevabına ASLA 'Context:', 'Explain:', 'Reasoning:' gibi iç düşüncelerini veya İngilizce kelimeler ekleme. "
+    #     "3. Soruya yanıt verecek bilgi Context'te YOKSA, uydurma ve sadece 'Bu bilgi rehberde bulunmamaktadır' de. "
+    #     "4. Yanıtı her zaman düzgün bir Türkçe ile ver."
+    # )
     
     print("\n--- YAPAY ZEKA ASİSTANI HAZIR ---")
     print("(Uygulamadan çıkmak için 'quit' veya 'exit' yazabilirsiniz)")
@@ -64,7 +72,7 @@ def start_chat():
         context = retrieve_context(user_query, Config.TOP_K)
         
         messages = [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {user_query}\nAnswer:"}
         ]
         
