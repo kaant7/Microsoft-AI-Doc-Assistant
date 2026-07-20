@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 from foundry_local_sdk import Configuration, FoundryLocalManager
 from prompts import SYSTEM_PROMPT 
 
-print("Sistem: Arama motoru ayağa kaldırılıyor...")
+print("System: Starting up the search engine...")
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def cosine_similarity(v1, v2):
@@ -34,7 +34,7 @@ def retrieve_context(query, top_k):
         results.append((score, content, source))
 
     results.sort(key=lambda x: x[0], reverse=True)
-    best_chunks = [f"[Kaynak: {source}]\n{content}" for _, content, source in results[:top_k]]
+    best_chunks = [f"[Source: {source}]\n{content}" for _, content, source in results[:top_k]]
     return "\n---\n".join(best_chunks)
 
 def start_chat():
@@ -42,29 +42,31 @@ def start_chat():
     FoundryLocalManager.initialize(config)
     manager = FoundryLocalManager.instance
     
-    print("\nSistem: Phi-3.5-mini hazırlanıyor...")
+    print("\nSystem: Preparing Phi-3.5-mini...")
     model = manager.catalog.get_model(Config.MODEL_NAME)
-    model.download(lambda p: None) 
+    model.download(lambda p: None)
     model.load()
     client = model.get_chat_client()
-    
-    print("\n--- YAPAY ZEKA ASİSTANI HAZIR ---")
-    print("(Uygulamadan çıkmak için 'quit' veya 'exit' yazabilirsiniz)")
-    
+    client.settings.max_tokens = Config.MAX_TOKENS
+    client.settings.temperature = Config.TEMPERATURE
+
+    print("\n--- AI ASSISTANT READY ---")
+    print("(Type 'quit' or 'exit' to leave the app)")
+
     while True:
-        user_query = input("\nSen: ").strip()
+        user_query = input("\nYou: ").strip()
         if user_query.lower() in ['quit', 'exit']:
-            print("Görüşmek üzere!")
+            print("Goodbye!")
             break
-            
+
         context = retrieve_context(user_query, Config.TOP_K)
-        
+
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Context:\n{context}\n\nSoru: {user_query}"}
+            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {user_query}"}
         ]
-        
-        print("Asistan:\n", end="", flush=True)
+
+        print("Assistant:\n", end="", flush=True)
         try:
             for chunk in client.complete_streaming_chat(messages):
                 if chunk.choices and len(chunk.choices) > 0:
@@ -72,7 +74,7 @@ def start_chat():
                     print(content, end="", flush=True)
             print("\n" + "-"*40)
         except Exception as e:
-            print(f"\nModel üretim hatası: {e}")
+            print(f"\nModel generation error: {e}")
             
     model.unload()
 

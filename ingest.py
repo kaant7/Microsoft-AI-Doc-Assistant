@@ -7,40 +7,40 @@ from config import Config
 
 def semantic_chunk_markdown(text):
     chunks = []
-    # Markdown başlıklarını (#, ##, ###) baz alarak metni böler
+    # Split the text on markdown headings (#, ##, ###)
     sections = re.split(r'(?m)^(?=#{1,3} )', text)
     for section in sections:
         section = section.strip()
-        # Çok kısa veya boş satırları atla
-        if len(section) > 20: 
+        # Skip very short or empty sections
+        if len(section) > 20:
             chunks.append(section)
     return chunks
 
 def run_ingest():
-    print("Sistem: Embedding modeli yükleniyor...")
+    print("System: Loading embedding model...")
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    
-    # Veritabanına bağlan ve eski verileri temizle
+
+    # Connect to the database and clear out old data
     conn = sqlite3.connect(Config.DB_PATH)
     cursor = conn.cursor()
     cursor.execute('DROP TABLE IF EXISTS documents')
     cursor.execute('''CREATE TABLE documents
                       (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, embedding TEXT, source TEXT)''')
-    
+
     if not os.path.exists(Config.DOCS_DIR):
         os.makedirs(Config.DOCS_DIR)
-        print(f"\nSistem: '{Config.DOCS_DIR}' klasörü bulunamadı, oluşturuldu.")
+        print(f"\nSystem: '{Config.DOCS_DIR}' folder not found, created it.")
         return
 
     total_chunks = 0
-    # docs/ altındaki tüm alt klasörlerde .md dosyalarını tara
+    # Walk every subfolder under docs/ for .md files
     for root, dirs, files in os.walk(Config.DOCS_DIR):
         for filename in files:
             if not filename.lower().endswith(".md"):
                 continue
             filepath = os.path.join(root, filename)
             rel_path = os.path.relpath(filepath, Config.DOCS_DIR)
-            print(f"Okunuyor: {rel_path} (Semantic Chunking aktif)")
+            print(f"Reading: {rel_path} (semantic chunking active)")
 
             with open(filepath, 'r', encoding='utf-8') as f:
                 text = f.read()
@@ -54,7 +54,7 @@ def run_ingest():
                 
     conn.commit()
     conn.close()
-    print(f"\nİşlem Tamamlandı: Toplam {total_chunks} anlamsal parça veritabanına (rag.db) yazıldı.")
+    print(f"\nDone: {total_chunks} semantic chunks written to the database (rag.db).")
 
 if __name__ == "__main__":
     run_ingest()

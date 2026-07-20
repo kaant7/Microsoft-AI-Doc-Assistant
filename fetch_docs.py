@@ -38,7 +38,7 @@ def is_include_fragment(rel_path):
 
 def fetch():
     with tempfile.TemporaryDirectory() as tmp:
-        print(f"Sistem: '{SPARSE_PATH}' klasörü {REPO_URL} üzerinden çekiliyor...")
+        print(f"System: Fetching '{SPARSE_PATH}' from {REPO_URL}...")
         subprocess.run(
             ["git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", REPO_URL, tmp],
             check=True,
@@ -57,8 +57,8 @@ def fetch():
                     continue
                 src_path = os.path.join(root, filename)
                 rel_path = os.path.relpath(src_path, src_root)
-                # includes/ altındaki dosyalar bağımsız makale değil, ana
-                # makalelere [!INCLUDE] ile gömülen parçalar — ayrı yazılmaz.
+                # Files under includes/ aren't standalone articles — they're
+                # fragments embedded into other articles via [!INCLUDE], so skip them.
                 if is_include_fragment(rel_path):
                     continue
 
@@ -73,7 +73,7 @@ def fetch():
                     f.write(content)
                 copied += 1
 
-        print(f"Tamamlandı: {copied} markdown dosyası '{DEST_DIR}' klasörüne kopyalandı.")
+        print(f"Done: copied {copied} markdown files into '{DEST_DIR}'.")
 
 
 if __name__ == "__main__":
