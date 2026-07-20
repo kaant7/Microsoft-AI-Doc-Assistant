@@ -5,4 +5,4 @@ class Config:
     
     CHUNK_SIZE = 200     # Her parçadaki kelime sayısı #200
     CHUNK_OVERLAP = 25   # Parçalar arası bağlam kopmasın diye ortak kelime sayısı #25
-    TOP_K = 1            # Soruya en çok benzeyen kaç parçanın LLM'e gideceği #3
+    TOP_K = 3            # Soruya en çok benzeyen kaç parçanın LLM'e gideceği #3
