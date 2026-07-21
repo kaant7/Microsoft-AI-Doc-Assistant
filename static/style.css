@@ -1,4 +1,5 @@
 :root {
+  --page-bg: #030304;
   --bg: #0b0b0f;
   --header-bg: #131319;
   --bubble-assistant: #1c1c24;
@@ -22,7 +23,7 @@ html, body {
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
+  background: var(--page-bg);
   color: var(--text);
 }
 
@@ -32,6 +33,42 @@ body {
   height: 100dvh;
   max-width: 720px;
   margin: 0 auto;
+  background: var(--bg);
+}
+
+@media (min-width: 760px) {
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 900px;
+    height: min(860px, calc(100vh - 64px));
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+  }
+
+  header {
+    padding: 18px 28px;
+  }
+
+  .messages {
+    padding: 24px 32px;
+  }
+
+  .composer {
+    padding: 14px 28px 12px;
+  }
+
+  .row-content {
+    max-width: 65%;
+  }
 }
 
 header {
@@ -65,7 +102,7 @@ header {
 }
 
 .avatar-user {
-  background: linear-gradient(135deg, #a855f7, #ec4899);
+  background: #ec4899;
   color: #fff;
   font-size: 13px;
   font-weight: 600;
