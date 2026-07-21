@@ -37,11 +37,11 @@ def retrieve_context(query, top_k):
     best_chunks = [f"[Source: {source}]\n{content}" for _, content, source in results[:top_k]]
     return "\n---\n".join(best_chunks)
 
-def start_chat():
+def load_model_and_client():
     config = Configuration(app_name="local_rag_app")
     FoundryLocalManager.initialize(config)
     manager = FoundryLocalManager.instance
-    
+
     print("\nSystem: Preparing Phi-3.5-mini...")
     model = manager.catalog.get_model(Config.MODEL_NAME)
     model.download(lambda p: None)
@@ -49,6 +49,10 @@ def start_chat():
     client = model.get_chat_client()
     client.settings.max_tokens = Config.MAX_TOKENS
     client.settings.temperature = Config.TEMPERATURE
+    return model, client
+
+def start_chat():
+    model, client = load_model_and_client()
 
     print("\n--- AI ASSISTANT READY ---")
     print("(Type 'quit' or 'exit' to leave the app)")
