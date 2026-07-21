@@ -7,5 +7,5 @@ class Config:
     CHUNK_OVERLAP = 25   # Shared word count between chunks so context doesn't break
     TOP_K = 3            # How many of the most relevant chunks go to the LLM
 
-    MAX_TOKENS = 500     # Max tokens the model can generate in a single reply
+    MAX_TOKENS = 300     # Max tokens the model can generate in a single reply
     TEMPERATURE = 0.2    # Low temperature: stay grounded in the docs, fewer "hallucinated" answers

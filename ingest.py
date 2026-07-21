@@ -5,6 +5,10 @@ import re
 from sentence_transformers import SentenceTransformer
 from config import Config
 
+BOILERPLATE_HEADINGS = re.compile(
+    r'^#{1,3}\s*(related content|see also|next steps)\s*$', re.IGNORECASE
+)
+
 def semantic_chunk_markdown(text):
     chunks = []
     # Split the text on markdown headings (#, ##, ###)
@@ -12,8 +16,14 @@ def semantic_chunk_markdown(text):
     for section in sections:
         section = section.strip()
         # Skip very short or empty sections
-        if len(section) > 20:
-            chunks.append(section)
+        if len(section) <= 20:
+            continue
+        # Skip boilerplate "further reading" sections — they're just link
+        # dumps and pollute retrieval with content the model isn't asked for.
+        first_line = section.split("\n", 1)[0]
+        if BOILERPLATE_HEADINGS.match(first_line):
+            continue
+        chunks.append(section)
     return chunks
 
 def run_ingest():
