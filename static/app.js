@@ -105,7 +105,7 @@ function addRow(text, role, { html = false, pending = false } = {}) {
 function showWelcome() {
   messages.innerHTML = "";
   addRow(
-    "Hello! I'm ready to answer questions about Microsoft Foundry Local, based on the official documentation.",
+    "Hello! I'm ready to answer questions about Foundry Local, Microsoft Foundry/AI Studio, AI agents, and Azure OpenAI, based on the official documentation.",
     "assistant"
   );
 }

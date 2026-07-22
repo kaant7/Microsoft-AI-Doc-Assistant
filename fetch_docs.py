@@ -4,10 +4,30 @@ import shutil
 import subprocess
 import tempfile
 
-REPO_URL = "https://github.com/MicrosoftDocs/azure-ai-docs.git"
-SPARSE_PATH = "articles/foundry-local"
-DEST_DIR = os.path.join("docs", "foundry-local")
-SKIP_DIRS = {"media"}
+SOURCES = [
+    {
+        "repo": "https://github.com/MicrosoftDocs/azure-ai-docs.git",
+        "sparse_path": "articles/foundry-local",
+        "dest": os.path.join("docs", "foundry-local"),
+    },
+    {
+        "repo": "https://github.com/MicrosoftLearning/mslearn-ai-studio.git",
+        "sparse_path": "Instructions/Exercises",
+        "dest": os.path.join("docs", "ai-studio"),
+    },
+    {
+        "repo": "https://github.com/MicrosoftLearning/mslearn-ai-agents.git",
+        "sparse_path": "Instructions/Exercises",
+        "dest": os.path.join("docs", "ai-agents"),
+    },
+    {
+        "repo": "https://github.com/MicrosoftLearning/mslearn-openai.git",
+        "sparse_path": "Instructions/Labs",
+        "dest": os.path.join("docs", "openai"),
+    },
+]
+
+SKIP_DIR_NAMES = {"media"}
 SKIP_FILES = {"toc.yml", "index.yml"}
 
 FRONTMATTER_RE = re.compile(r"^---\n.*?\n---\n", re.DOTALL)
@@ -33,25 +53,25 @@ def resolve_includes(text, base_dir, visited):
 
 def is_include_fragment(rel_path):
     parts = rel_path.split(os.sep)
-    return "includes" in parts[:-1]
+    return "includes" in (p.lower() for p in parts[:-1])
 
 
-def fetch():
+def fetch_source(repo, sparse_path, dest_dir):
     with tempfile.TemporaryDirectory() as tmp:
-        print(f"System: Fetching '{SPARSE_PATH}' from {REPO_URL}...")
+        print(f"System: Fetching '{sparse_path}' from {repo}...")
         subprocess.run(
-            ["git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", REPO_URL, tmp],
+            ["git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", repo, tmp],
             check=True,
         )
-        subprocess.run(["git", "sparse-checkout", "set", SPARSE_PATH], cwd=tmp, check=True)
+        subprocess.run(["git", "sparse-checkout", "set", sparse_path], cwd=tmp, check=True)
 
-        src_root = os.path.join(tmp, SPARSE_PATH)
-        if os.path.exists(DEST_DIR):
-            shutil.rmtree(DEST_DIR)
+        src_root = os.path.join(tmp, sparse_path)
+        if os.path.exists(dest_dir):
+            shutil.rmtree(dest_dir)
 
         copied = 0
         for root, dirs, files in os.walk(src_root):
-            dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+            dirs[:] = [d for d in dirs if d.lower() not in SKIP_DIR_NAMES]
             for filename in files:
                 if not filename.lower().endswith(".md") or filename in SKIP_FILES:
                     continue
@@ -67,13 +87,21 @@ def fetch():
                 content = strip_frontmatter(content)
                 content = resolve_includes(content, root, {src_path})
 
-                dest_path = os.path.join(DEST_DIR, rel_path)
+                dest_path = os.path.join(dest_dir, rel_path)
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 with open(dest_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 copied += 1
 
-        print(f"Done: copied {copied} markdown files into '{DEST_DIR}'.")
+        print(f"Done: copied {copied} markdown files into '{dest_dir}'.")
+        return copied
+
+
+def fetch():
+    total = 0
+    for source in SOURCES:
+        total += fetch_source(source["repo"], source["sparse_path"], source["dest"])
+    print(f"\nAll sources fetched: {total} markdown files total.")
 
 
 if __name__ == "__main__":
