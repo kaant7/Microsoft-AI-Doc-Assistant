@@ -2,7 +2,7 @@ import atexit
 
 from flask import Flask, request, jsonify, send_from_directory
 from config import Config
-from prompts import SYSTEM_PROMPT
+from prompts import SYSTEM_PROMPT, NOT_COVERED_MESSAGE
 from chat import retrieve_context, load_model_and_client
 
 app = Flask(__name__, static_folder="static", static_url_path="")
@@ -24,6 +24,9 @@ def chat():
         return jsonify({"error": "message is required"}), 400
 
     context = retrieve_context(user_query, Config.TOP_K)
+    if not context:
+        return jsonify({"answer": NOT_COVERED_MESSAGE})
+
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {user_query}"},

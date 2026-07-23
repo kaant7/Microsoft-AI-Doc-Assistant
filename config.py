@@ -6,6 +6,7 @@ class Config:
     CHUNK_SIZE = 200     # Word count per chunk
     CHUNK_OVERLAP = 25   # Shared word count between chunks so context doesn't break
     TOP_K = 3            # How many of the most relevant chunks go to the LLM
+    MIN_RELEVANCE_SCORE = 0.35  # Cosine similarity floor — below this, a chunk is considered irrelevant
 
     MAX_TOKENS = 300     # Max tokens the model can generate in a single reply
     TEMPERATURE = 0.2    # Low temperature: stay grounded in the docs, fewer "hallucinated" answers

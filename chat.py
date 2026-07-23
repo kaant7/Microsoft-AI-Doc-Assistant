@@ -5,7 +5,7 @@ import numpy as np
 from config import Config
 from sentence_transformers import SentenceTransformer
 from foundry_local_sdk import Configuration, FoundryLocalManager
-from prompts import SYSTEM_PROMPT 
+from prompts import SYSTEM_PROMPT, NOT_COVERED_MESSAGE
 
 print("System: Starting up the search engine...")
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -34,7 +34,8 @@ def retrieve_context(query, top_k):
         results.append((score, content, source))
 
     results.sort(key=lambda x: x[0], reverse=True)
-    best_chunks = [f"[Source: {source}]\n{content}" for _, content, source in results[:top_k]]
+    relevant = [r for r in results[:top_k] if r[0] >= Config.MIN_RELEVANCE_SCORE]
+    best_chunks = [f"[Source: {source}]\n{content}" for _, content, source in relevant]
     return "\n---\n".join(best_chunks)
 
 def load_model_and_client():
@@ -64,6 +65,11 @@ def start_chat():
             break
 
         context = retrieve_context(user_query, Config.TOP_K)
+
+        if not context:
+            print(f"Assistant:\n{NOT_COVERED_MESSAGE}")
+            print("-" * 40)
+            continue
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
