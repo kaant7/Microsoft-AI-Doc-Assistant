@@ -1,0 +1,4 @@
+flask
+foundry-local-sdk
+sentence-transformers
+numpy
