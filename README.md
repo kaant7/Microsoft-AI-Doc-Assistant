@@ -84,3 +84,5 @@ Key settings live in `config.py`:
 - `MAX_TOKENS` / `TEMPERATURE` — generation length and randomness
 
 To index additional Microsoft Learn products, add an entry to the `SOURCES` list in `fetch_docs.py` (repo URL + path to sparse-checkout), then re-run `fetch_docs.py` and `ingest.py`.
+
+Internship Completion Video Link: https://www.youtube.com/watch?v=0sN_J0mMGHM
