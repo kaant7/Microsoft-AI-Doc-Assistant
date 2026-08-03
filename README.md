@@ -4,6 +4,12 @@ A local, offline RAG (Retrieval-Augmented Generation) chatbot that answers quest
 
 Everything runs on-device: embeddings, retrieval, and inference. No cloud API calls, no external database.
 
+## Screenshots
+
+| Mobile | Desktop |
+|---|---|
+| ![Mobile view of the chat UI](screenshots/mobile.png) | ![Desktop view of the chat UI](screenshots/desktop.png) |
+
 ## How it works
 
 1. **Fetch** — `fetch_docs.py` pulls markdown content from official Microsoft Learn / MicrosoftLearning GitHub repos via sparse checkout (no full repo clones).
